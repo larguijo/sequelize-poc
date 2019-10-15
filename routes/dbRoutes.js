@@ -42,12 +42,25 @@ module.exports = (app) => {
   });
 
   app.get('/api/products', async (req, res) => {
+    console.log('Products');
     try {
-      const users = await models.Product.findAll();
+      const users = await models.Product.findAll(
+        {
+          include: [
+            {
+              model: models.Stock,
+              include: [
+                { model: models.Store }
+              ]
+            }
+          ]
+        }
+      );
       res.json(
         users
       );
     } catch (error) {
+      console.log('error', error);
       res.status(500).send(error);
     }
   });
@@ -75,7 +88,55 @@ module.exports = (app) => {
 
   app.post('/api/products', async (req, res) => {
     try {
-      const user = await models.Product.create(req.body);
+      const stores = await models.Store.findAll().map(store => ({ StoreId: store.id, quantity: 0 }));
+      const newProduct = { ...req.body, Stocks: stores };
+      console.log(newProduct);
+      const product = await models.Product.create(newProduct, {
+        include: [models.Product.Stocks]
+      });
+      res.json(product);
+
+    } catch (error) {
+      console.log(error);
+      res.status(500).send(error);
+    }
+  });
+
+  app.get('/api/stores', async (req, res) => {
+    try {
+      const users = await models.Store.findAll();
+      res.json(
+        users
+      );
+    } catch (error) {
+      res.status(500).send(error);
+    }
+  });
+
+  app.get('/api/stores/:id', async (req, res) => {
+    try {
+      const user = await models.Store.findByPk(req.params.id);
+      res.json(user);
+    } catch (error) {
+      res.status(500).send(error);
+    }
+
+  })
+
+  app.get('/api/stores', async (req, res) => {
+    try {
+      const users = await models.Store.findAll();
+      res.json(
+        users
+      );
+    } catch (error) {
+      res.status(500).send(error);
+    }
+  });
+
+  app.post('/api/stores', async (req, res) => {
+    try {
+      const user = await models.Store.create(req.body);
       res.json(user);
     } catch (error) {
       res.status(500).send(error);

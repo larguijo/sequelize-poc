@@ -20,8 +20,8 @@ sequel
   const model = sequel.import(entity, require(`./${entity}`));
   db[model.name] = model;
 })
-db.Product.hasMany(db.Stock);
-db.Store.hasMany(db.Stock);
+db.Product.Stocks = db.Product.hasMany(db.Stock);
+db.Stock.Store = db.Stock.belongsTo(db.Store);
 
 sequel.sync();
 
