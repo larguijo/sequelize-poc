@@ -14,9 +14,9 @@ function Products() {
   }
 
   const renderProducts = () => {
-    return <ul className="collection">
+    return <div className="row">
       {products.map(product => <ProductItem key={product.id} product={product} />)}
-    </ul>
+    </div>
   }
 
   useEffect(() => {

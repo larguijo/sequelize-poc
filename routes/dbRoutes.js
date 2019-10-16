@@ -1,4 +1,5 @@
 const models = require('../models');
+
 module.exports = (app) => {
   app.get('/api/people', async (req, res) => {
     try {
@@ -67,7 +68,9 @@ module.exports = (app) => {
 
   app.get('/api/products/:id', async (req, res) => {
     try {
-      const user = await models.Product.findByPk(req.params.id);
+      const user = await models.Product.findByPk(req.params.id, {
+        include: [models.Product.Stocks]
+      });
       res.json(user);
     } catch (error) {
       res.status(500).send(error);
@@ -77,7 +80,7 @@ module.exports = (app) => {
 
   app.get('/api/products', async (req, res) => {
     try {
-      const users = await models.Product.findAll();
+      const users = await models.Product.findAll({ order: [['name', 'ASC']] });
       res.json(
         users
       );
@@ -90,7 +93,6 @@ module.exports = (app) => {
     try {
       const stores = await models.Store.findAll().map(store => ({ StoreId: store.id, quantity: 0 }));
       const newProduct = { ...req.body, Stocks: stores };
-      console.log(newProduct);
       const product = await models.Product.create(newProduct, {
         include: [models.Product.Stocks]
       });
@@ -99,6 +101,36 @@ module.exports = (app) => {
     } catch (error) {
       console.log(error);
       res.status(500).send(error);
+    }
+  });
+
+  app.put('/api/products/:id/stocks', async (req, res) => {
+    const { body: stocks } = req;
+    const { id: productId } = req.params;
+    let response = [];
+    let transaction;
+
+    try {
+      transaction = await models.sequelize.transaction();
+      await Promise.all(Object.keys(stocks).map(async key => {
+        const stock = await models.Stock.findOne({
+          where: {
+            ProductId: productId,
+            StoreId: key
+          },
+        }, { transaction });
+        if (stock) {
+          await stock.update({ quantity: stocks[key] }, { transaction });
+        } else {
+          await models.Stock.create({ ProductId: productId, StoreId: key, quantity: stocks[key] }, { transaction });
+        }
+      }));
+      await transaction.commit();
+      res.send();
+    } catch (error) {
+      if (transaction) await transaction.rollback();
+      console.log('T error', error);
+      res.status(500).send(error.errors[0].message);
     }
   });
 
