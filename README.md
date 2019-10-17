@@ -1,5 +1,6 @@
 # sequelize-poc
-POC project to test Sequelize basic functionality.
+POC project to test Sequelize basic functionality.<br>
+You can see the deployed application <a href="https://sequelize-poc.herokuapp.com/">here</a>
 
 ## About DB configuration
 It's important that you have an installed Postgres instance to run this project (Instructions to do that are not in this README file).<br>
